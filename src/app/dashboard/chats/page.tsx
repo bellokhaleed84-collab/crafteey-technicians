@@ -61,7 +61,7 @@ export default function ChatsPage() {
       },
       (err) => {
         console.error("chats listen error", err);
-        setError("Couldn't load your chats. Check your connection and try again.");
+        setError(`Couldn't load your chats (${err.code}). Check the browser console for details.`);
       }
     );
   }, [user]);
