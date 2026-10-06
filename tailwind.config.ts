@@ -15,6 +15,10 @@ const config: Config = {
           light: "#FFF3E0",
           ink: "#FFFFFF"
         },
+        navy: {
+          DEFAULT: "#0F1E3A",
+          light: "#1B2D4F"
+        },
         ink: {
           DEFAULT: "#1A1A1A",
           muted: "#6B6570",
@@ -22,8 +26,8 @@ const config: Config = {
         },
         surface: {
           DEFAULT: "#FFFFFF",
-          muted: "#FBF9F4",
-          border: "#EFEAE0"
+          muted: "#F4F6FA",
+          border: "#E6E9F0"
         },
         status: {
           success: "#16A34A",
@@ -47,7 +51,7 @@ const config: Config = {
         }
       },
       boxShadow: {
-        card: "0 1px 2px rgba(21,19,21,0.04), 0 1px 3px rgba(21,19,21,0.06)"
+        card: "0 1px 2px rgba(15,30,58,0.05), 0 2px 6px rgba(15,30,58,0.06)"
       }
     }
   },

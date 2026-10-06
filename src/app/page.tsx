@@ -36,9 +36,9 @@ export default function SplashPage() {
   }, [loading, user, getToken, router]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-brand-ink px-6">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-navy px-6">
       <div className="flex flex-col items-center gap-4">
-        <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-brand text-4xl font-black text-brand-ink">
+        <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-brand text-4xl font-black text-white">
           C
         </div>
         <div className="text-center">
