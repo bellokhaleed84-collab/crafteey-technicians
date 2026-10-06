@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import CompanyStaff from "@/models/CompanyStaff";
 import { AuthError } from "@/middleware/auth";
 import { requireApprovedCompany } from "@/lib/companyAuth";
+import { syncCompanyParticipants } from "@/lib/chatAccess";
 
 /**
  * DELETE /api/company/staff/[id]
@@ -29,6 +30,12 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     if (!removed) {
       return NextResponse.json({ error: "Staff member not found" }, { status: 404 });
     }
+
+    // Take the removed person off the company's chats right away.
+    await syncCompanyParticipants(String(company._id)).catch((e) =>
+      console.error("chat sync failed", e)
+    );
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof AuthError) {

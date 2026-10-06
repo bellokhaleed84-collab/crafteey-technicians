@@ -1,5 +1,6 @@
 import { initializeApp, getApps, cert, App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 
 function readEnv(...names: string[]): string {
   for (const name of names) {
@@ -36,3 +37,4 @@ function getAdminApp(): App {
 }
 
 export const adminAuth = getAuth(getAdminApp());
+export const adminDb = getFirestore(getAdminApp());

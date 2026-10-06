@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import CompanyStaff from "@/models/CompanyStaff";
 import Company from "@/models/Company";
 import { verifyToken, AuthError } from "@/middleware/auth";
+import { syncCompanyParticipants } from "@/lib/chatAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,11 @@ export async function GET(req: NextRequest) {
         throw err;
       }
       if (!staff) return NextResponse.json({ error: "Not a staff member." }, { status: 404 });
+
+      // New staff member: give them access to the company's existing chats.
+      await syncCompanyParticipants(String(staff.companyId)).catch((e) =>
+        console.error("chat sync failed", e)
+      );
     }
 
     const company = await Company.findOne({ _id: staff.companyId, status: "approved" })
