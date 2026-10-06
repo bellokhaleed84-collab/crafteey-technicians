@@ -81,7 +81,7 @@ export default function StaffHomePage() {
           </p>
           <button
             onClick={refresh}
-            className="min-h-12 w-full rounded-xl bg-brand py-3 font-semibold text-brand-ink"
+            className="min-h-12 w-full rounded-xl bg-brand py-3 font-semibold text-white"
           >
             Try again
           </button>
@@ -113,27 +113,28 @@ export default function StaffHomePage() {
 
   return (
     <main className="min-h-screen bg-surface-muted">
-      <div className="mx-auto w-full max-w-md space-y-4 px-5 py-8">
-        <section className="rounded-2xl bg-surface p-5 shadow-card">
-          <p className="text-sm text-ink-muted">Hi {firstName}</p>
-          <h1 className="mt-0.5 text-xl font-bold text-ink">{access.companyName}</h1>
+      <div className="mx-auto w-full max-w-md">
+        <header className="rounded-b-3xl bg-navy px-5 pb-8 pt-8">
+          <p className="text-sm text-white/70">Hi {firstName}</p>
+          <h1 className="mt-0.5 text-xl font-bold text-white">{access.companyName}</h1>
+          <p className="text-xs text-white/60">Technician</p>
 
-          <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="mt-5 flex items-center justify-between gap-3">
             <span
               className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${
-                online ? "bg-status-success-bg text-status-success" : "bg-surface-border text-ink-muted"
+                online ? "bg-status-success/20 text-green-300" : "bg-white/10 text-white/70"
               }`}
             >
               <span
                 aria-hidden="true"
-                className={`h-2 w-2 rounded-full ${online ? "bg-status-success" : "bg-ink-faint"}`}
+                className={`h-2 w-2 rounded-full ${online ? "bg-green-400" : "bg-white/50"}`}
               />
               {online ? "Online" : "Offline"}
             </span>
             <button
               onClick={toggleOnline}
               disabled={toggling}
-              className="min-h-12 rounded-xl border border-surface-border px-5 text-sm font-semibold text-ink disabled:opacity-60"
+              className="min-h-12 rounded-xl bg-white/10 px-5 text-sm font-semibold text-white disabled:opacity-60"
             >
               {toggling ? "Please wait..." : online ? "Go offline" : "Go online"}
             </button>
@@ -143,21 +144,23 @@ export default function StaffHomePage() {
               {toggleError}
             </p>
           )}
-        </section>
+        </header>
 
-        <section className="rounded-2xl bg-surface p-5 shadow-card">
-          <h2 className="text-sm font-bold text-ink">Your jobs</h2>
-          <p className="mt-2 text-sm text-ink-muted">
-            No jobs assigned yet. Your company owner will assign jobs to you.
-          </p>
-        </section>
+        <div className="space-y-4 px-5 pt-4 pb-8">
+          <section className="rounded-2xl bg-surface p-5 shadow-card">
+            <h2 className="text-sm font-bold text-ink">Your jobs</h2>
+            <p className="mt-2 text-sm text-ink-muted">
+              No jobs assigned yet. Your company owner will assign jobs to you.
+            </p>
+          </section>
 
-        <button
-          onClick={logout}
-          className="min-h-12 w-full rounded-xl border border-surface-border bg-surface py-3 font-semibold text-status-danger"
-        >
-          Log out
-        </button>
+          <button
+            onClick={logout}
+            className="min-h-12 w-full rounded-xl border border-surface-border bg-surface py-3 font-semibold text-status-danger"
+          >
+            Log out
+          </button>
+        </div>
       </div>
     </main>
   );
