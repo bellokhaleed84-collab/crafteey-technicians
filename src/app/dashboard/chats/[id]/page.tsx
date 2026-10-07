@@ -15,8 +15,10 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
+import { blockedNotice } from "@/lib/blockedNotice";
 import PageHeader from "@/components/PageHeader";
 import QuoteCard, { type CompanyQuote } from "@/components/QuoteCard";
+import ReportSheet from "@/components/ReportSheet";
 
 type Msg = {
   id: string;
@@ -45,8 +47,9 @@ export default function ConversationPage() {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [blocked, setBlocked] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState<string | null>(null); // the lock reason
   const [sendError, setSendError] = useState<string | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -141,12 +144,25 @@ export default function ConversationPage() {
         return;
       }
       const data = await res.json().catch(() => ({}));
-      if (data.blocked) setBlocked(data.error);
+      if (data.blocked) setBlocked(typeof data.reason === "string" ? data.reason : "unknown");
       else setSendError(data.error || "Couldn't send your message. Try again.");
     } catch (err) {
       setSendError(err instanceof Error ? err.message : "Couldn't send your message. Try again.");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function submitReport(reason: string, details: string): Promise<string | null> {
+    try {
+      const res = await apiFetch(getToken, "/api/chat/report", {
+        method: "POST",
+        body: JSON.stringify({ conversationId: id, reason, details }),
+      });
+      if (res.ok) return null;
+      return await readError(res, "Couldn't send the report. Try again.");
+    } catch (err) {
+      return err instanceof Error ? err.message : "Couldn't send the report. Try again.";
     }
   }
 
@@ -167,6 +183,7 @@ export default function ConversationPage() {
 
   const hasPaidMain = quotes.some((q) => q.kind === "main" && q.status === "paid");
   const quoteById = new Map(quotes.map((q) => [q.id, q]));
+  const notice = blocked ? blockedNotice(blocked) : null;
 
   if (loadError) {
     return (
@@ -227,17 +244,29 @@ export default function ConversationPage() {
       </div>
 
       <form onSubmit={send} className="sticky bottom-0 space-y-2 border-t border-surface-border bg-surface p-3">
-        {blocked && (
-          <p role="alert" className="rounded-lg bg-status-warning-bg p-3 text-sm text-status-warning">
-            {blocked}
-          </p>
+        {notice && (
+          <div role="alert" className="rounded-lg bg-status-warning-bg p-3 text-status-warning">
+            <p className="text-sm font-semibold">Message not sent</p>
+            <p className="mt-1 text-sm">{notice.title}</p>
+            <p className="mt-1 text-xs">{notice.body}</p>
+            <p className="mt-2 text-xs opacity-80">
+              Blocked messages are never delivered. They are logged and may be reviewed by Crafteey.
+            </p>
+            <button
+              type="button"
+              onClick={() => setBlocked(null)}
+              className="mt-2 text-xs font-semibold underline"
+            >
+              Edit my message
+            </button>
+          </div>
         )}
         {sendError && (
           <p role="alert" className="rounded-lg bg-status-danger-bg p-3 text-sm text-status-danger">
             {sendError}
           </p>
         )}
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Link
             href={`/dashboard/chats/${id}/quote`}
             className="rounded-lg border border-brand px-3 py-2 text-xs font-semibold text-brand"
@@ -252,6 +281,13 @@ export default function ConversationPage() {
               Additional quote
             </Link>
           )}
+          <button
+            type="button"
+            onClick={() => setReportOpen(true)}
+            className="ml-auto rounded-lg px-3 py-2 text-xs font-semibold text-ink-muted"
+          >
+            Report
+          </button>
         </div>
         <div className="flex items-end gap-2">
           <textarea
@@ -271,6 +307,8 @@ export default function ConversationPage() {
           </button>
         </div>
       </form>
+
+      {reportOpen && <ReportSheet onClose={() => setReportOpen(false)} onSubmit={submitReport} />}
     </div>
   );
 }
