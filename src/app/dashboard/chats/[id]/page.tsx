@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   collection,
@@ -13,10 +14,18 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiFetch } from "@/lib/apiClient";
+import { apiFetch, readError } from "@/lib/apiClient";
 import PageHeader from "@/components/PageHeader";
+import QuoteCard, { type CompanyQuote } from "@/components/QuoteCard";
 
-type Msg = { id: string; senderRole: "client" | "company"; text: string; createdAt: Timestamp | null };
+type Msg = {
+  id: string;
+  senderRole: "client" | "company" | "system";
+  type: string;
+  quoteId: string | null;
+  text: string;
+  createdAt: Timestamp | null;
+};
 type ConvInfo = { clientName: string; requestTitle: string; unreadCompany: number };
 
 function hhmm(ts: Timestamp | null): string {
@@ -31,9 +40,11 @@ export default function ConversationPage() {
   const { user, getToken } = useAuth();
   const [conv, setConv] = useState<ConvInfo | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [quotes, setQuotes] = useState<CompanyQuote[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [blocked, setBlocked] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -59,7 +70,14 @@ export default function ConversationPage() {
         setMessages(
           snap.docs.map((d) => {
             const x = d.data();
-            return { id: d.id, senderRole: x.senderRole, text: x.text ?? "", createdAt: x.createdAt ?? null };
+            return {
+              id: d.id,
+              senderRole: x.senderRole,
+              type: x.type ?? "text",
+              quoteId: x.quoteId ?? null,
+              text: x.text ?? "",
+              createdAt: x.createdAt ?? null,
+            };
           })
         ),
       () => setLoadError("Couldn't load the messages.")
@@ -70,9 +88,32 @@ export default function ConversationPage() {
     };
   }, [user, id]);
 
+  const loadQuotes = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await apiFetch(getToken, `/api/quotes?conversationId=${encodeURIComponent(id)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setQuotes(Array.isArray(data.quotes) ? data.quotes : []);
+    } catch {
+      /* keep what we have */
+    }
+  }, [id, getToken]);
+
+  // Quote status lives in the database, so reload on new messages and every 20 seconds.
+  useEffect(() => {
+    if (!user) return;
+    void loadQuotes();
+  }, [user, loadQuotes, messages.length]);
+  useEffect(() => {
+    if (!user) return;
+    const t = setInterval(() => void loadQuotes(), 20000);
+    return () => clearInterval(t);
+  }, [user, loadQuotes]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+  }, [messages.length, quotes.length]);
 
   // Clear the unread badge while this chat is open.
   useEffect(() => {
@@ -109,6 +150,24 @@ export default function ConversationPage() {
     }
   }
 
+  async function cancelQuote(quoteId: string) {
+    if (!window.confirm("Cancel this quotation? The customer won't be able to pay it.")) return;
+    setBusy(true);
+    setSendError(null);
+    try {
+      const res = await apiFetch(getToken, `/api/quotes/${quoteId}/cancel`, { method: "POST" });
+      if (!res.ok) setSendError(await readError(res, "Couldn't cancel the quotation."));
+      await loadQuotes();
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : "Couldn't cancel the quotation.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const hasPaidMain = quotes.some((q) => q.kind === "main" && q.status === "paid");
+  const quoteById = new Map(quotes.map((q) => [q.id, q]));
+
   if (loadError) {
     return (
       <div>
@@ -129,7 +188,26 @@ export default function ConversationPage() {
           <p className="pt-6 text-center text-sm text-ink-muted">No messages yet. Say hello.</p>
         )}
         {messages.map((m) => {
+          if (m.type === "system") {
+            return (
+              <div key={m.id} className="flex justify-center">
+                <p className="rounded-full bg-black/5 px-3 py-1 text-center text-xs text-ink-muted">{m.text}</p>
+              </div>
+            );
+          }
           const mine = m.senderRole === "company";
+          if (m.type === "quote") {
+            const q = m.quoteId ? quoteById.get(m.quoteId) : undefined;
+            return (
+              <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                {q ? (
+                  <QuoteCard quote={q} busy={busy} onCancel={cancelQuote} />
+                ) : (
+                  <p className="rounded-xl bg-surface px-4 py-2 text-sm text-ink-muted shadow-card">{m.text}</p>
+                )}
+              </div>
+            );
+          }
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div
@@ -159,6 +237,22 @@ export default function ConversationPage() {
             {sendError}
           </p>
         )}
+        <div className="flex gap-2">
+          <Link
+            href={`/dashboard/chats/${id}/quote`}
+            className="rounded-lg border border-brand px-3 py-2 text-xs font-semibold text-brand"
+          >
+            Send quotation
+          </Link>
+          {hasPaidMain && (
+            <Link
+              href={`/dashboard/chats/${id}/quote?additional=1`}
+              className="rounded-lg border border-surface-border px-3 py-2 text-xs font-semibold text-ink-muted"
+            >
+              Additional quote
+            </Link>
+          )}
+        </div>
         <div className="flex items-end gap-2">
           <textarea
             rows={1}
