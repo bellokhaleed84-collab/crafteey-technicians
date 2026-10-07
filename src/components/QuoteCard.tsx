@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { nairaText } from "@/lib/quoteShared";
 
 export type CompanyQuote = {
@@ -12,6 +13,7 @@ export type CompanyQuote = {
   totalKobo: number;
   expiresAt: string;
   status: "sent" | "paid" | "declined" | "cancelled" | "expired";
+  jobId?: string | null;
   commissionPercent?: number;
   commissionKobo?: number;
   companyEarningKobo?: number;
@@ -99,6 +101,14 @@ export default function QuoteCard({
             >
               Cancel quotation
             </button>
+          )}
+          {quote.status === "paid" && quote.jobId && (
+            <Link
+              href={`/dashboard/jobs/${quote.jobId}`}
+              className="rounded-lg border border-brand px-3 py-1 text-xs font-semibold text-brand"
+            >
+              Open job
+            </Link>
           )}
         </div>
       </div>

@@ -57,6 +57,7 @@ export function quoteView(q: IQuote, role: "client" | "company") {
     expiresAt: new Date(q.expiresAt).toISOString(),
     status: effectiveStatus(q),
     jobStatus: q.jobStatus ?? null,
+    jobId: q.jobId ? String(q.jobId) : null,
     paidAt: q.payment?.paidAt ? new Date(q.payment.paidAt).toISOString() : null,
     createdAt: new Date(q.createdAt).toISOString(),
   };

@@ -23,6 +23,8 @@ export interface IQuote {
   status: QuoteStatus;
   statusAt?: Date;
   jobStatus?: "confirmed";
+  jobId?: Types.ObjectId;
+  companyCreditedAt?: Date;
   payment: {
     status: "none" | "pending" | "success" | "failed";
     references: string[];
@@ -62,6 +64,8 @@ const QuoteSchema = new Schema<IQuote>(
     status: { type: String, enum: ["sent", "paid", "declined", "cancelled", "expired"], default: "sent" },
     statusAt: Date,
     jobStatus: { type: String, enum: ["confirmed"] },
+    jobId: { type: Schema.Types.ObjectId, ref: "CompanyJob" },
+    companyCreditedAt: Date,
     payment: {
       status: { type: String, enum: ["none", "pending", "success", "failed"], default: "none" },
       references: { type: [String], default: [] },
