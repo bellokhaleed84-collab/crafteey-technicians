@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 
+// What a company can report about a customer.
 const REASONS = [
-  { value: "contact_outside", label: "Asked me to talk or pay outside Crafteey" },
-  { value: "abusive", label: "Rude or abusive" },
+  { value: "contact_outside", label: "Customer wants to talk or pay outside Crafteey" },
+  { value: "abusive", label: "Customer is rude or abusive" },
+  { value: "fake_request", label: "Fake or time-wasting request" },
   { value: "scam", label: "Looks like a scam" },
   { value: "unsafe", label: "I feel unsafe" },
   { value: "other", label: "Something else" },
@@ -34,7 +36,7 @@ export default function ReportSheet({ onClose, onSubmit }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/50" role="dialog" aria-modal="true" aria-label="Report this chat">
+    <div className="fixed inset-0 z-50 flex items-end bg-black/50" role="dialog" aria-modal="true" aria-label="Report this customer">
       <div className="max-h-[90dvh] w-full overflow-y-auto rounded-t-2xl bg-surface p-5">
         {done ? (
           <div className="space-y-4 text-center">
@@ -47,7 +49,7 @@ export default function ReportSheet({ onClose, onSubmit }: Props) {
         ) : (
           <div className="space-y-4">
             <div>
-              <p className="text-lg font-bold text-ink">Report this chat</p>
+              <p className="text-lg font-bold text-ink">Report this customer</p>
               <p className="mt-1 text-sm text-ink-muted">What went wrong? Our team will read the chat.</p>
             </div>
             <div className="space-y-2">
