@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken, AuthError } from "@/middleware/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { getConversationForUser } from "@/lib/chatAccess";
-import ChatReport, { REPORT_REASONS } from "@/models/ChatReport";
+import ChatReport, { REPORT_REASONS, type ReportReason } from "@/models/ChatReport";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +10,10 @@ const DAILY_LIMIT = 5;
 
 function bad(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
+}
+
+function isReportReason(value: string): value is ReportReason {
+  return (REPORT_REASONS as readonly string[]).includes(value);
 }
 
 /**
@@ -23,10 +27,11 @@ export async function POST(req: NextRequest) {
     if (!body) return bad("Invalid request body");
 
     const conversationId = String(body.conversationId ?? "");
-    const reason = String(body.reason ?? "");
+    const reasonRaw = String(body.reason ?? "");
     const details = String(body.details ?? "").trim();
 
-    if (!(REPORT_REASONS as readonly string[]).includes(reason)) return bad("Choose a reason for the report.");
+    if (!isReportReason(reasonRaw)) return bad("Choose a reason for the report.");
+    const reason: ReportReason = reasonRaw;
     if (details.length > 500) return bad("Details can be up to 500 characters.");
     if (reason === "other" && details.length < 5) return bad("Tell us what happened.");
 
