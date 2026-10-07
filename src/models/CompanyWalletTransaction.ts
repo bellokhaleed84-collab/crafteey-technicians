@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Model, type Types } from "mongoose";
 
-export type CompanyWalletReason = "quote_earning" | "withdrawal" | "adjustment";
+export type CompanyWalletReason = "quote_earning" | "withdrawal" | "withdrawal_refund" | "adjustment";
 
 export interface ICompanyWalletTransaction {
   companyId: Types.ObjectId;
@@ -19,7 +19,12 @@ const CompanyWalletTransactionSchema = new Schema<ICompanyWalletTransaction>(
   {
     companyId: { type: Schema.Types.ObjectId, required: true, index: true, immutable: true },
     type: { type: String, enum: ["credit", "debit"], required: true, immutable: true },
-    reason: { type: String, enum: ["quote_earning", "withdrawal", "adjustment"], required: true, immutable: true },
+    reason: {
+      type: String,
+      enum: ["quote_earning", "withdrawal", "withdrawal_refund", "adjustment"],
+      required: true,
+      immutable: true,
+    },
     amountKobo: { type: Number, required: true, min: 1, immutable: true },
     balanceAfterKobo: { type: Number, required: true, min: 0, immutable: true },
     reference: { type: String, required: true, unique: true, immutable: true },
